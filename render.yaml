@@ -1,4 +1,5 @@
 services:
+  # Servicio principal n8n
   - type: web
     plan: free
     runtime: image
@@ -7,11 +8,11 @@ services:
       url: docker.io/n8nio/n8n:latest
 
     envVars:
-      # Clave de encriptación (Render la genera automáticamente)
+      # Clave de encriptación
       - key: N8N_ENCRYPTION_KEY
         generateValue: true
 
-      # Configuración de la base de datos Postgres
+      # Configuración base de datos Postgres
       - key: DB_TYPE
         value: postgresdb
       - key: DB_POSTGRESDB_DATABASE
@@ -31,7 +32,7 @@ services:
           name: n8n-db
           property: user
 
-      # Configuración necesaria para que n8n genere URLs HTTPS correctas
+      # Host y URL pública (no tocar)
       - key: N8N_HOST
         value: n8n-service-rp01.onrender.com
       - key: N8N_PROTOCOL
@@ -40,6 +41,31 @@ services:
         value: 443
       - key: WEBHOOK_URL
         value: https://n8n-service-rp01.onrender.com/
+
+      # -------------------------
+      # CONFIGURACIÓN DE REDIS
+      # -------------------------
+      # n8n usa Redis para Bull queues
+      - key: QUEUE_BULL_REDIS_HOST
+        fromService:
+          name: redis-service
+          property: host
+
+      - key: QUEUE_BULL_REDIS_PORT
+        fromService:
+          name: redis-service
+          property: port
+
+      - key: QUEUE_BULL_REDIS_PASSWORD
+        fromService:
+          name: redis-service
+          property: password
+
+  # Servicio Redis en Render
+  - type: redis
+    name: redis-service
+    plan: free
+    maxmemoryPolicy: allkeys-lru
 
 databases:
   - name: n8n-db
