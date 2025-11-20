@@ -6,7 +6,6 @@ services:
     name: n8n-service
     image:
       url: docker.io/n8nio/n8n:latest
-
     envVars:
       # Clave de encriptación
       - key: N8N_ENCRYPTION_KEY
@@ -43,29 +42,38 @@ services:
         value: https://n8n-service-rp01.onrender.com/
 
       # -------------------------
-      # CONFIGURACIÓN DE REDIS
+      # CONFIGURACIÓN DE REDIS (desde el servicio redis-service)
       # -------------------------
-      # n8n usa Redis para Bull queues
+      # Host y puerto (propiedades válidas: host, port, hostport)
       - key: QUEUE_BULL_REDIS_HOST
         fromService:
           name: redis-service
+          type: redis
           property: host
-
       - key: QUEUE_BULL_REDIS_PORT
         fromService:
           name: redis-service
+          type: redis
           property: port
 
-      - key: QUEUE_BULL_REDIS_PASSWORD
+      # Connection string completa (incluye password). n8n acepta QUEUE_BULL_REDIS_URL
+      - key: QUEUE_BULL_REDIS_URL
         fromService:
           name: redis-service
-          property: password
+          type: redis
+          property: connectionString
+
+      # Habilita TLS si la connectionString comienza con rediss:// (opcional)
+      - key: QUEUE_BULL_REDIS_TLS
+        value: "true"
 
   # Servicio Redis en Render
   - type: redis
     name: redis-service
     plan: free
     maxmemoryPolicy: allkeys-lru
+    # Render requiere ipAllowList para servicios de datos
+    ipAllowList: []
 
 databases:
   - name: n8n-db
